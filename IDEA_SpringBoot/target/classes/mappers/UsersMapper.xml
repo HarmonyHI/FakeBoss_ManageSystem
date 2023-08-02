@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.asrc.mybatis.mapper.UsersMapper">
+
+
+    <!--    分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~-->
+
+    <!--    //【0 - 用户注册】-->
+    <update id="SXHNB" parameterType="map">
+        INSERT tbl_user_info(userName, userPwd, userSex, userEmail, userBirthday, depart, WID)
+            value (#{userName}, md5(#{userPwd}), #{userSex}, #{userEmail}, #{userBirthday}, 1, 1)
+    </update>
+
+    <!--    //【0 - 密码更新】-->
+    <update id="updatePwd" parameterType="map">
+        update tbl_user_info
+        set userPwd=md5(#{newPwd})
+        where userID = #{userID}
+          and userPwd = md5(#{oldPwd})
+    </update>
+
+    <!--    //【1 - 登录查询】-->
+    <select id="login" resultType="java.util.Map" parameterType="map">
+        select *
+        from tbl_user_info
+        where (userID = #{loginName} or userEmail = #{loginName} or userName = #{loginName})
+          and userPwd = md5(#{loginPwd})
+          and depart = #{depart} # 1代表是经理，只有经理才可以登录系统
+    </select>
+
+
+    <!--    分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~-->
+
+
+    <!--    //【2 - 添加员工】-->
+    <insert id="save" parameterType="map">
+        insert into tbl_user_info(userName, userPwd, userSex, userEmail, userBirthday, depart, WID)
+        values (#{userName},  md5(#{userPwd}), #{userSex}, #{userEmail}, #{userBirthday}, #{depart}, #{WID})
+    </insert>
+
+    <!--    //【3 - 查询员工】（模糊查询）-->
+    <select id="findByParam" resultType="java.util.Map">
+        SELECT *
+        from 员工
+        <where>
+            <if test="  userName!=null and userName!=''  ">
+                and userName like concat('%',#{userName},'%')
+            </if>
+
+            <if test="  userSex!=null and userSex!=0   ">
+                and userSex = #{userSex}
+            </if>
+
+            <if test="  minn!=null and minn!=0  ">
+                and Age >= #{minn}
+            </if>
+
+            <if test=" maxx!=null and  maxx!=0   ">
+                and Age &lt;= #{maxx}+1
+            </if>
+
+            <if test=" WID!=null and  WID!=0   ">
+                and WID = #{WID}
+            </if>
+        </where>
+        # 前端新增2个返回值，t1 t2，作为年龄范围限制的约束
+    </select>
+
+    <!--    //【4 - 修改员工】-->
+    <update id="update" parameterType="map">
+        update tbl_user_info
+        set userName=#{userName},
+            userSex=#{userSex},
+            userEmail=#{userEmail},
+            userBirthday=#{userBirthday},
+            WID=#{WID}
+        where userID = #{userID}
+    </update>
+
+    <!--    //【5 - 删除员工】-->
+    <delete id="delete" parameterType="string">
+        delete
+        from tbl_user_info
+        where userID in
+        <foreach collection="array" item="userID" open="(" close=")" separator=",">
+            #{userID}
+        </foreach>
+    </delete>
+
+
+    <!--    分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~-->
+
+
+    <!--    【6 - 请假人员查询】-->
+    <select id="sleep" resultType="java.util.Map">
+        SELECT *
+        from 请假
+    </select>
+    <select id="sleep0" resultType="java.util.Map">
+        SELECT *
+        from 未审批
+    </select>
+    <select id="sleep12" resultType="java.util.Map">
+        SELECT *
+        from 已审批
+    </select>
+
+
+    <!--    //【6 - 部门审批】-->
+    <!--    修改前   idx是userID-->
+    <update id="restAgree" parameterType="string">
+        update rest
+        set agree=1
+        where idx in
+        <foreach collection="array" item="idx" open="(" close=")" separator=",">
+            #{idx}
+        </foreach>
+    </update>
+    <update id="restDisAgree" parameterType="string">
+        update rest
+        set agree=2
+        where idx in
+        <foreach collection="array" item="idx" open="(" close=")" separator=",">
+            #{idx}
+        </foreach>
+    </update>
+
+
+    <!--    分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~-->
+
+
+    <!--    //【7 - 奖惩登记】-->
+    <insert id="jcRegister" parameterType="map">
+        insert jc(userID, jcTime, jcMoney, jcDis)
+        values (#{userID}, #{jcTime}, #{jcMoney}, #{jcDis})
+# jcTime 需要前端捕获并return  时间  金额  描述
+    </insert>
+
+    <!--    //【8 - 奖惩查询】-->
+    <select id="jcQuery" resultType="java.util.Map" parameterType="map">
+        select *
+        from 奖惩
+        where userID = #{userID}
+    </select>
+
+
+    <!--    分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~-->
+
+
+    <!--    【9 - 请假登记】-->
+    <insert id="restReg" parameterType="map">
+        insert rest(userid, t1, t2, dis, agree)
+        VALUES (#{userID}, #{t1}, #{t2}, #{dis}, 0)
+    </insert>
+
+
+    <!--    【10 - 查询请假记录】 根据userID-->
+    <select id="restQuery" resultType="java.util.Map" parameterType="map">
+        select *
+        from 请假
+        where userID = #{userID}
+    </select>
+
+
+    <!--     小于号使用 &lt; 替代-->
+
+
+    <!--    【11 - 是否存在这个用户】 根据userID-->
+
+    <select id="findUser" resultType="java.util.Map" parameterType="map">
+        select count(*) as `haveUser`
+        from tbl_user_info
+        where tbl_user_info.userName=#{userName}
+    </select>
+
+
+
+
+
+
+    <!--    分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~-->
+
+    <!--    【12 - 纵览 · 打卡   未签到n1    已签到n2      已签退n3】 -->
+    <select id="ask1" resultType="java.util.Map" parameterType="map">
+        select *
+        from 打卡情况
+    </select>
+    <!--    【13 - 纵览 · 出勤    迟到n1   早退n2   正常出勤n3】 -->
+    <select id="ask2" resultType="java.util.Map" parameterType="map">
+        select *
+        from 出勤情况
+    </select>
+    <!--    【14 - 出勤查询    单个员工/全体员工】 -->
+    <select id="ask3" resultType="java.util.Map">
+        SELECT *
+        from 出勤列表
+        <where>
+            <if test=" userID!=null and  userID!=0   ">
+                and userID = #{userID}
+            </if>
+        </where>
+<!--        # 前端新增2个返回值，t1 t2，作为年龄范围限制的约束-->
+    </select>
+
+
+    <!--    分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~分割线~~-->
+
+    <!--    //【15 - 打卡上班】-->
+    <insert id="signIn" parameterType="map">
+        insert sign
+        values (#{userID}, now())
+    </insert>
+
+    <!--    //【16 - 修改密码】-->
+    <update id="forgetParcel" parameterType="map">
+        update tbl_user_info
+        set userPwd=md5(#{userPwd})
+        where userName=#{userName}
+    </update>
+
+
+    <!--    //【17 - 公告板  最新6条打卡记录】-->
+    <select id="getBoard" resultType="java.util.Map" parameterType="map">
+        select *
+        from 公告板6
+    </select>
+
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
